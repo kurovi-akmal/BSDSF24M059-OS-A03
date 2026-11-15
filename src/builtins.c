@@ -22,6 +22,16 @@ int handle_builtin(char** arglist) {
         return 1;
     }
 
+    // HISTORY command
+    else if (strcmp(arglist[0], "history") == 0) {
+
+        for (int i = 0; i < history_count; i++) {
+            printf("%d  %s\n", i + 1, history[i]);
+        }
+
+        return 1;
+    }
+
     // HELP command
     else if (strcmp(arglist[0], "help") == 0) {
         printf("Built-in commands:\n");
@@ -29,6 +39,7 @@ int handle_builtin(char** arglist) {
         printf("  exit           - Exit the shell\n");
         printf("  help           - Display help\n");
         printf("  jobs           - Display jobs status\n");
+        printf("  history        - Display command history\n");
 
         return 1;
     }
