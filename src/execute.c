@@ -65,7 +65,8 @@ void run_command(char** args) {
     exit(1);
 }
 
-int execute(char* arglist[]) {
+
+int execute(char* arglist[], int background, const char* command) {
 
     int pipe_pos = -1;
 
@@ -79,6 +80,7 @@ int execute(char* arglist[]) {
 
     // Normal command without pipe
     if (pipe_pos == -1) {
+
         int pid = fork();
 
         if (pid == -1) {
@@ -90,6 +92,13 @@ int execute(char* arglist[]) {
             run_command(arglist);
         }
 
+        // Background execution
+        if (background) {
+            add_job(pid, command);
+            return 0;
+        }
+
+        // Foreground execution
         int status;
         waitpid(pid, &status, 0);
 
@@ -113,6 +122,7 @@ int execute(char* arglist[]) {
     left[i] = NULL;
 
     int j = 0;
+
     for (i = pipe_pos + 1; arglist[i] != NULL; i++) {
         right[j++] = arglist[i];
     }
@@ -125,7 +135,6 @@ int execute(char* arglist[]) {
         return 1;
     }
 
-    // First child: writes into pipe
     int pid1 = fork();
 
     if (pid1 == -1) {
@@ -147,7 +156,6 @@ int execute(char* arglist[]) {
         run_command(left);
     }
 
-    // Second child: reads from pipe
     int pid2 = fork();
 
     if (pid2 == -1) {
@@ -170,10 +178,10 @@ int execute(char* arglist[]) {
         run_command(right);
     }
 
-    // Parent closes both pipe ends
     close(fd[0]);
     close(fd[1]);
 
+    // For now, pipes remain foreground commands
     int status1, status2;
 
     waitpid(pid1, &status1, 0);

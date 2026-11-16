@@ -45,8 +45,23 @@ int handle_builtin(char** arglist) {
     }
 
     // JOBS command
+    
     else if (strcmp(arglist[0], "jobs") == 0) {
-        printf("Job control not yet implemented.\n");
+
+        if (job_count == 0) {
+            printf("No background jobs running.\n");
+        }
+        else {
+            printf("Active Background Jobs:\n");
+
+            for (int i = 0; i < job_count; i++) {
+                printf("[%d] PID: %d  %s\n",
+                    i + 1,
+                    jobs[i].pid,
+                    jobs[i].command);
+                }
+            }
+
         return 1;
     }
 

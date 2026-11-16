@@ -3,7 +3,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -Iinclude
 LDLIBS = -lreadline
 
-SRC = src/main.c src/shell.c src/execute.c src/builtins.c
+SRC = src/main.c src/shell.c src/execute.c src/builtins.c src/jobs.c
 TARGET = bin/myshell
 
 all: $(TARGET)

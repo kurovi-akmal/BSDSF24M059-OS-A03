@@ -16,15 +16,26 @@
 #define ARGLEN 30
 #define PROMPT "FCIT> "
 #define HISTORY_SIZE 20
+#define MAX_JOBS 100
 
+typedef struct {
+    pid_t pid;
+    char command[MAX_LEN];
+} Job;
+
+extern Job jobs[MAX_JOBS];
+extern int job_count;
 extern char* history[HISTORY_SIZE];
 extern int history_count;
 
 // Function prototypes
 char* read_cmd(char* prompt, FILE* fp);
 char** tokenize(char* cmdline);
-int execute(char** arglist);
+int execute(char** arglist, int background, const char* command);
 int handle_builtin(char** arglist);
 int handle_builtin(char** arglist);
+void add_job(pid_t pid, const char* command);
+void check_background_jobs(void);
+
 
 #endif // SHELL_H

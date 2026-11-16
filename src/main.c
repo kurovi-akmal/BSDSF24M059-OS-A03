@@ -62,11 +62,104 @@ int expand_history(char** cmdline) {
 }
 
 
+
+void execute_line(char* line) {
+
+    char* current = line;
+
+    while (current != NULL) {
+
+        char* separator = strchr(current, ';');
+
+        if (separator != NULL) {
+            *separator = '\0';
+        }
+
+        // Trim leading spaces
+        while (*current == ' ' || *current == '\t') {
+            current++;
+        }
+
+        // Trim trailing spaces
+        int len = strlen(current);
+
+        while (len > 0 &&
+               (current[len - 1] == ' ' ||
+                current[len - 1] == '\t')) {
+            current[--len] = '\0';
+        }
+
+        if (*current != '\0') {
+
+            // Preserve original command for job list
+            char* command_copy = strdup(current);
+
+            if (command_copy == NULL) {
+                perror("strdup");
+                return;
+            }
+
+            char** arglist = tokenize(current);
+
+            if (arglist != NULL) {
+
+                int count = 0;
+
+                while (arglist[count] != NULL) {
+                    count++;
+                }
+
+                // Detect & at the end
+                int background = 0;
+
+                if (count > 0 &&
+                    strcmp(arglist[count - 1], "&") == 0) {
+
+                    background = 1;
+                    free(arglist[count - 1]);
+                    arglist[count - 1] = NULL;
+                }
+
+                if (arglist[0] != NULL) {
+
+                    if (!handle_builtin(arglist)) {
+                        execute(arglist, background, command_copy);
+                    }
+                }
+
+                // Free arguments
+                for (int i = 0; arglist[i] != NULL; i++) {
+                    free(arglist[i]);
+                }
+
+                free(arglist);
+            }
+
+            free(command_copy);
+        }
+
+        if (separator == NULL) {
+            break;
+        }
+
+        current = separator + 1;
+    }
+}
+
+
+
+
 int main() {
     char* cmdline;
     char** arglist;
 
-    while ((cmdline = readline(PROMPT)) != NULL) {
+    while (1) {
+        check_background_jobs();
+        cmdline = readline(PROMPT);
+
+        if (cmdline == NULL) {
+            break;
+        }
 
         // Step 1: Expand !n before storing
         if (!expand_history(&cmdline)) {
@@ -87,20 +180,7 @@ int main() {
         }
 
         // Step 3: Tokenize
-        if ((arglist = tokenize(cmdline)) != NULL) {
-
-            // Step 4: Handle built-ins
-            if (!handle_builtin(arglist)) {
-                execute(arglist);
-            }
-
-            // Free tokenized arguments
-            for (int i = 0; arglist[i] != NULL; i++) {
-                free(arglist[i]);
-            }
-
-            free(arglist);
-        }
+        execute_line(cmdline);
 
         free(cmdline);
     }
