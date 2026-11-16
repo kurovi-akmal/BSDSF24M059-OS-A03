@@ -66,7 +66,7 @@ int main() {
     char* cmdline;
     char** arglist;
 
-    while ((cmdline = read_cmd(PROMPT, stdin)) != NULL) {
+    while ((cmdline = readline(PROMPT)) != NULL) {
 
         // Step 1: Expand !n before storing
         if (!expand_history(&cmdline)) {
@@ -83,6 +83,7 @@ int main() {
 
         if (*p != '\0') {
             add_to_history(cmdline);
+            add_history(cmdline);
         }
 
         // Step 3: Tokenize
