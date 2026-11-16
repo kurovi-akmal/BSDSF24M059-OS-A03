@@ -19,44 +19,97 @@ char* read_cmd(char* prompt, FILE* fp) {
     return cmdline;
 }
 
+
 char** tokenize(char* cmdline) {
-    // Edge case: empty command line
-    if (cmdline == NULL || cmdline[0] == '\0' || cmdline[0] == '\n') {
+    if (cmdline == NULL || cmdline[0] == '\0') {
         return NULL;
     }
 
-    char** arglist = (char**)malloc(sizeof(char*) * (MAXARGS + 1));
-    for (int i = 0; i < MAXARGS + 1; i++) {
-        arglist[i] = (char*)malloc(sizeof(char) * ARGLEN);
-        bzero(arglist[i], ARGLEN);
+    char** arglist = malloc(sizeof(char*) * (MAXARGS + 1));
+
+    if (arglist == NULL) {
+        perror("malloc");
+        return NULL;
     }
 
-    char* cp = cmdline;
-    char* start;
-    int len;
     int argnum = 0;
+    char* cp = cmdline;
 
-    while (*cp != '\0' && argnum < MAXARGS) {
-        while (*cp == ' ' || *cp == '\t') cp++; // Skip leading whitespace
-        
-        if (*cp == '\0') break; // Line was only whitespace
+    while (*cp != '\0') {
 
-        start = cp;
-        len = 1;
-        while (*++cp != '\0' && !(*cp == ' ' || *cp == '\t')) {
-            len++;
+        // Skip spaces and tabs
+        while (*cp == ' ' || *cp == '\t') {
+            cp++;
         }
-        strncpy(arglist[argnum], start, len);
-        arglist[argnum][len] = '\0';
-        argnum++;
+
+        if (*cp == '\0') {
+            break;
+        }
+
+        // Recognize special operators
+        if (*cp == '<' || *cp == '>' || *cp == '|') {
+
+            if (argnum >= MAXARGS) {
+                fprintf(stderr, "Too many arguments!\n");
+                goto error;
+            }
+
+            arglist[argnum] = malloc(2);
+
+            if (arglist[argnum] == NULL) {
+                perror("malloc");
+                goto error;
+            }
+
+            arglist[argnum][0] = *cp;
+            arglist[argnum][1] = '\0';
+
+            argnum++;
+            cp++;
+        }
+        else {
+            char* start = cp;
+
+            while (*cp != '\0' &&
+                   *cp != ' ' && *cp != '\t' &&
+                   *cp != '<' && *cp != '>' && *cp != '|') {
+                cp++;
+            }
+
+            int len = cp - start;
+
+            if (argnum >= MAXARGS) {
+                fprintf(stderr, "Too many arguments!\n");
+                goto error;
+            }
+
+            arglist[argnum] = malloc(len + 1);
+
+            if (arglist[argnum] == NULL) {
+                perror("malloc");
+                goto error;
+            }
+
+            strncpy(arglist[argnum], start, len);
+            arglist[argnum][len] = '\0';
+
+            argnum++;
+        }
     }
 
-    if (argnum == 0) { // No arguments were parsed
-        for(int i = 0; i < MAXARGS + 1; i++) free(arglist[i]);
+    if (argnum == 0) {
         free(arglist);
         return NULL;
     }
 
     arglist[argnum] = NULL;
     return arglist;
+
+error:
+    for (int i = 0; i < argnum; i++) {
+        free(arglist[i]);
+    }
+
+    free(arglist);
+    return NULL;
 }
