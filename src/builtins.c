@@ -9,6 +9,11 @@ int handle_builtin(char** arglist) {
         exit(0);
     }
 
+    else if (strcmp(arglist[0], "set") == 0) {
+        print_variables();
+        return 1;
+    }
+
     // CD command
     else if (strcmp(arglist[0], "cd") == 0) {
 
