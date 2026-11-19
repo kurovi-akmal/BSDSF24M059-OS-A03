@@ -37,5 +37,9 @@ int handle_builtin(char** arglist);
 void add_job(pid_t pid, const char* command);
 void check_background_jobs(void);
 
+int handle_variable_assignment(const char *command);
+void expand_variables(char **args);
+void print_variables(void);
+
 
 #endif // SHELL_H

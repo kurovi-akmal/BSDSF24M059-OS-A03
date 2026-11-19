@@ -1,26 +1,54 @@
-#include "shell.h"
 
+#include "shell.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+// Read command from input
 char* read_cmd(char* prompt, FILE* fp) {
+
     printf("%s", prompt);
-    char* cmdline = (char*) malloc(sizeof(char) * MAX_LEN);
-    int c, pos = 0;
+    fflush(stdout);
+
+    char* cmdline = malloc(sizeof(char) * MAX_LEN);
+
+    if (cmdline == NULL) {
+        perror("malloc");
+        return NULL;
+    }
+
+    int c;
+    int pos = 0;
 
     while ((c = getc(fp)) != EOF) {
-        if (c == '\n') break;
+
+        if (c == '\n') {
+            break;
+        }
+
+        if (pos >= MAX_LEN - 1) {
+            fprintf(stderr, "Command too long!\n");
+            free(cmdline);
+            return NULL;
+        }
+
         cmdline[pos++] = c;
     }
 
     if (c == EOF && pos == 0) {
         free(cmdline);
-        return NULL; // Handle Ctrl+D
+        return NULL;
     }
-    
+
     cmdline[pos] = '\0';
+
     return cmdline;
 }
 
 
+// Tokenize command into arguments
 char** tokenize(char* cmdline) {
+
     if (cmdline == NULL || cmdline[0] == '\0') {
         return NULL;
     }
@@ -67,12 +95,18 @@ char** tokenize(char* cmdline) {
             argnum++;
             cp++;
         }
+
         else {
+
             char* start = cp;
 
             while (*cp != '\0' &&
-                   *cp != ' ' && *cp != '\t' &&
-                   *cp != '<' && *cp != '>' && *cp != '|') {
+                   *cp != ' ' &&
+                   *cp != '\t' &&
+                   *cp != '<' &&
+                   *cp != '>' &&
+                   *cp != '|') {
+
                 cp++;
             }
 
@@ -90,7 +124,7 @@ char** tokenize(char* cmdline) {
                 goto error;
             }
 
-            strncpy(arglist[argnum], start, len);
+            memcpy(arglist[argnum], start, len);
             arglist[argnum][len] = '\0';
 
             argnum++;
@@ -103,13 +137,16 @@ char** tokenize(char* cmdline) {
     }
 
     arglist[argnum] = NULL;
+
     return arglist;
 
 error:
+
     for (int i = 0; i < argnum; i++) {
         free(arglist[i]);
     }
 
     free(arglist);
+
     return NULL;
 }
